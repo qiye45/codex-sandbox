@@ -9,7 +9,7 @@ on:
         default: latest
         type: string
       push_image:
-        description: 'Push image to Docker Hub'
+        description: 'Push image to GHCR'
         required: false
         default: true
         type: boolean
@@ -21,10 +21,15 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  REGISTRY: ghcr.io
+  IMAGE_NAME: qiye45/codex-sandbox
 
 jobs:
   build-version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
       - uses: actions/checkout@v5
@@ -34,19 +39,12 @@ jobs:
         env:
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
           INPUT_PUSH_IMAGE: ${{ inputs.push_image }}
-          DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
-          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
         run: |
           if [ "$INPUT_DRY_RUN" = "true" ]; then
             echo "effective_dry_run=true" >> "$GITHUB_OUTPUT"
             echo "effective_push=false" >> "$GITHUB_OUTPUT"
             echo "📝 Dry run requested"
           elif [ "$INPUT_PUSH_IMAGE" = "true" ]; then
-            if [ -z "$DOCKER_HUB_USER" ] || [ -z "$DOCKER_HUB_TOKEN" ]; then
-              echo "❌ push_image=true but Docker Hub secrets are missing"
-              echo "   Please set DOCKER_HUB_USER and DOCKER_HUB_TOKEN, or run with push_image=false"
-              exit 1
-            fi
             echo "effective_dry_run=false" >> "$GITHUB_OUTPUT"
             echo "effective_push=true" >> "$GITHUB_OUTPUT"
             echo "🚀 Push mode enabled"
@@ -56,12 +54,13 @@ jobs:
             echo "ℹ️ Build-only mode (no push)"
           fi
 
-      - name: Login to DockerHub
+      - name: Login to GHCR
         if: ${{ steps.mode.outputs.effective_push == 'true' }}
         uses: docker/login-action@v4
         with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -75,7 +74,8 @@ jobs:
           platforms="linux/amd64,linux/arm64"
           dry_run="${{ steps.mode.outputs.effective_dry_run }}"
           should_push="${{ steps.mode.outputs.effective_push }}"
-          image_name="qiye45/codex-sandbox:${version}"
+          image_name="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${version}"
+          latest_image="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
           
           echo "🔍 Processing version: ${version}"
           echo "🔧 Dry run mode: ${dry_run}"
@@ -99,8 +99,8 @@ jobs:
                   docker buildx build \
                     --platform "$platforms" \
                     --build-arg "CODEX_VERSION=${version}" \
-                    -t "qiye45/codex-sandbox:latest" --push .
-                  echo "✅ Successfully built and pushed ${image_name} and qiye45/codex-sandbox:latest"
+                    -t "$latest_image" --push .
+                  echo "✅ Successfully built and pushed ${image_name} and ${latest_image}"
                 fi
               else
                 echo "🚀 Building ${image_name} locally (no push)..."

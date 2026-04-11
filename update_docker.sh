@@ -3,6 +3,8 @@
 set -e
 
 platforms="linux/amd64,linux/arm64"
+registry="${REGISTRY:-ghcr.io}"
+image_repo="${IMAGE_NAME:-qiye45/codex-sandbox}"
 
 # Check if npm is available
 if ! command -v npm &> /dev/null; then
@@ -18,7 +20,8 @@ if [ -z "$codex_version" ]; then
     exit 1
 fi
 
-image_name=qiye45/codex-sandbox:"${codex_version}"
+image_name="${registry}/${image_repo}:${codex_version}"
+latest_image="${registry}/${image_repo}:latest"
 
 if [ -z "$(DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect "$image_name" 2> /dev/null)" ]; then
   echo "Building for codex version: ${codex_version}"
@@ -31,7 +34,7 @@ if [ -z "$(DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect "$image_name"
     --platform "$platforms" \
     --build-arg "CODEX_VERSION=${codex_version}" \
     -t "$image_name" \
-    -t "qiye45/codex-sandbox:latest" \
+    -t "$latest_image" \
     --push .
 
   # Extract current version from VERSION.md
