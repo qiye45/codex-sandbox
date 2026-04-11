@@ -1,24 +1,16 @@
+FROM python:3.13.5-slim AS python-runtime
+
 FROM ubuntu:24.04
 
 # Install basic development tools, ca-certificates, and iptables/ipset, then clean up apt cache to reduce image size
 RUN apt-get update && apt-get install -y --no-install-recommends \
   aggregate \
-  build-essential \
   ca-certificates \
   curl \
   dnsutils \
   fzf \
   gh \
   git \
-  libbz2-dev \
-  libffi-dev \
-  libgdbm-dev \
-  liblzma-dev \
-  libncursesw5-dev \
-  libreadline-dev \
-  libsqlite3-dev \
-  libssl-dev \
-  libuuid1 \
   gnupg2 \
   iproute2 \
   ipset \
@@ -26,14 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   jq \
   less \
   man-db \
-  tk-dev \
   procps \
-  uuid-dev \
   unzip \
   wget \
   ripgrep \
-  xz-utils \
-  zlib1g-dev \
   zsh \
   && rm -rf /var/lib/apt/lists/*
 
@@ -55,19 +43,10 @@ RUN case "${TARGETARCH}" in \
   && tar -C /usr/local -xzf /tmp/go.tar.gz \
   && rm -f /tmp/go.tar.gz
 
-# Install Python 3.13.5 from source
-ARG PYTHON_VERSION=3.13.5
-RUN curl -fsSL "https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz" -o /tmp/python.tgz \
-  && tar -xzf /tmp/python.tgz -C /tmp \
-  && cd "/tmp/Python-${PYTHON_VERSION}" \
-  && ./configure --enable-optimizations --with-ensurepip=install \
-  && make -j"$(nproc)" \
-  && make altinstall \
-  && ln -sf /usr/local/bin/python3.13 /usr/local/bin/python3 \
-  && ln -sf /usr/local/bin/python3.13 /usr/local/bin/python \
-  && ln -sf /usr/local/bin/pip3.13 /usr/local/bin/pip3 \
-  && ln -sf /usr/local/bin/pip3.13 /usr/local/bin/pip \
-  && rm -rf "/tmp/Python-${PYTHON_VERSION}" /tmp/python.tgz
+# Install Python 3.13.5 from prebuilt binaries (multi-stage copy)
+COPY --from=python-runtime /usr/local /usr/local
+RUN ln -sf /usr/local/bin/python3 /usr/local/bin/python \
+  && ln -sf /usr/local/bin/pip3 /usr/local/bin/pip
 
 # Set up npm global directory with proper permissions
 RUN mkdir -p /usr/local/share/npm-global \

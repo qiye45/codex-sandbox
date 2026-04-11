@@ -170,7 +170,7 @@ This image comes with the [@openai/codex CLI](https://www.npmjs.com/package/@ope
 
 - **Ubuntu 24.04** base image
 - **Node.js 24** (from NodeSource repository) with npm
-- **Python 3.13.5** (official source build, with `pip`)
+- **Python 3.13.5** (prebuilt runtime binaries, with `pip`)
 - **Go 1.25.7** toolchain (official Go binary, multi-arch)
 - **@openai/codex** CLI tool (configurable version via build arg)
 - Essential development tools: aggregate, ca-certificates, curl, dnsutils, fzf, gh, git, gnupg2, iproute2, ipset, iptables, jq, less, man-db, procps, unzip, ripgrep, zsh
@@ -228,7 +228,7 @@ This image is dramatically simplified from the original `codex-universal` image,
 
 The Dockerfile creates a minimal Ubuntu 24.04-based image with:
 - Node.js 24 installed from the official NodeSource repository
-- Python 3.13.5 installed from the official source tarball (`python`, `python3`, `pip`, `pip3` available)
+- Python 3.13.5 installed from prebuilt runtime binaries via multi-stage copy (`python`, `python3`, `pip`, `pip3` available)
 - Go 1.25.7 installed from official Go release tarball (supports `linux/amd64` and `linux/arm64`)
 - @openai/codex CLI tool installed globally via npm
 - Essential development tools and utilities
