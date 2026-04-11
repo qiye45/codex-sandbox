@@ -85,7 +85,7 @@ RUN npm install -g @openai/codex@${CODEX_VERSION} \
 # Set npm global config for any user
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV GOPATH=/go
-ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/share/npm-global/bin:/usr/local/go/bin:/go/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=$PATH:/usr/local/bin:/usr/local/share/npm-global/bin:/usr/local/go/bin:/go/bin
 
 # Inside the container we consider the environment already sufficiently locked
 # down, therefore instruct Codex CLI to allow running without sandboxing.
