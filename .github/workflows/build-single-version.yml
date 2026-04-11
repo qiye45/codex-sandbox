@@ -8,6 +8,11 @@ on:
         required: false
         default: latest
         type: string
+      push_image:
+        description: 'Push image to Docker Hub'
+        required: false
+        default: true
+        type: boolean
       dry_run:
         description: 'Dry run - check what would be built without actually building'
         required: false
@@ -23,6 +28,40 @@ jobs:
     
     steps:
       - uses: actions/checkout@v5
+
+      - name: Resolve execution mode
+        id: mode
+        env:
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          INPUT_PUSH_IMAGE: ${{ inputs.push_image }}
+          DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        run: |
+          if [ "$INPUT_DRY_RUN" = "true" ]; then
+            echo "effective_dry_run=true" >> "$GITHUB_OUTPUT"
+            echo "effective_push=false" >> "$GITHUB_OUTPUT"
+            echo "📝 Dry run requested"
+          elif [ "$INPUT_PUSH_IMAGE" = "true" ]; then
+            if [ -z "$DOCKER_HUB_USER" ] || [ -z "$DOCKER_HUB_TOKEN" ]; then
+              echo "❌ push_image=true but Docker Hub secrets are missing"
+              echo "   Please set DOCKER_HUB_USER and DOCKER_HUB_TOKEN, or run with push_image=false"
+              exit 1
+            fi
+            echo "effective_dry_run=false" >> "$GITHUB_OUTPUT"
+            echo "effective_push=true" >> "$GITHUB_OUTPUT"
+            echo "🚀 Push mode enabled"
+          else
+            echo "effective_dry_run=false" >> "$GITHUB_OUTPUT"
+            echo "effective_push=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ Build-only mode (no push)"
+          fi
+
+      - name: Login to DockerHub
+        if: ${{ steps.mode.outputs.effective_push == 'true' }}
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -33,8 +72,10 @@ jobs:
           set -e
           
           version="${{ inputs.version }}"
-          dry_run="${{ inputs.dry_run }}"
-          image_name="benyamin/codex-sandbox:${version}"
+          platforms="linux/amd64,linux/arm64"
+          dry_run="${{ steps.mode.outputs.effective_dry_run }}"
+          should_push="${{ steps.mode.outputs.effective_push }}"
+          image_name="qiye45/codex-sandbox:${version}"
           
           echo "🔍 Processing version: ${version}"
           echo "🔧 Dry run mode: ${dry_run}"
@@ -43,14 +84,31 @@ jobs:
           echo "🔍 Checking if ${image_name} exists..."
           if [ -z "$(DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect "$image_name" 2> /dev/null)" ]; then
             if [ "$dry_run" = "true" ]; then
-              echo "📝 [DRY RUN] Would build ${image_name} (no push)"
+              echo "📝 [DRY RUN] Would build ${image_name}"
               echo "✅ Dry run completed for version ${version}"
             else
-              echo "🚀 Building ${image_name} locally (no push)..."
-              docker buildx build \
-                --build-arg "CODEX_VERSION=${version}" \
-                -t "$image_name" --load .
-              echo "✅ Successfully built ${image_name} (local only)"
+              if [ "$should_push" = "true" ]; then
+                echo "🚀 Building and pushing ${image_name}..."
+                docker buildx build \
+                  --platform "$platforms" \
+                  --build-arg "CODEX_VERSION=${version}" \
+                  -t "$image_name" --push .
+                if [ "$version" = "latest" ]; then
+                  echo "✅ Successfully built and pushed ${image_name}"
+                else
+                  docker buildx build \
+                    --platform "$platforms" \
+                    --build-arg "CODEX_VERSION=${version}" \
+                    -t "qiye45/codex-sandbox:latest" --push .
+                  echo "✅ Successfully built and pushed ${image_name} and qiye45/codex-sandbox:latest"
+                fi
+              else
+                echo "🚀 Building ${image_name} locally (no push)..."
+                docker buildx build \
+                  --build-arg "CODEX_VERSION=${version}" \
+                  -t "$image_name" --load .
+                echo "✅ Successfully built ${image_name} (local only)"
+              fi
             fi
           else
             echo "⏭️  ${image_name} already exists, skipping..."

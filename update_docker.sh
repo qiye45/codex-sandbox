@@ -18,7 +18,7 @@ if [ -z "$codex_version" ]; then
     exit 1
 fi
 
-image_name=benyamin/codex-sandbox:"${codex_version}"
+image_name=qiye45/codex-sandbox:"${codex_version}"
 
 if [ -z "$(DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect "$image_name" 2> /dev/null)" ]; then
   echo "Building for codex version: ${codex_version}"
@@ -31,7 +31,7 @@ if [ -z "$(DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect "$image_name"
     --platform "$platforms" \
     --build-arg "CODEX_VERSION=${codex_version}" \
     -t "$image_name" \
-    -t "benyamin/codex-sandbox:latest" \
+    -t "qiye45/codex-sandbox:latest" \
     --push .
 
   # Extract current version from VERSION.md

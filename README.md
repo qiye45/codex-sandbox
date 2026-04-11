@@ -1,5 +1,5 @@
 # Codex Sandbox
-[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-benyamin%2Fcodex--sandbox-blue?logo=docker)](https://hub.docker.com/r/benyamin/codex-sandbox)
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-qiye45%2Fcodex--sandbox-blue?logo=docker)](https://hub.docker.com/r/qiye45/codex-sandbox)
 
 
 `Codex Sandbox` is a minimal Docker base image for running the [OpenAI Codex CLI](https://www.npmjs.com/package/@openai/codex).
@@ -11,13 +11,13 @@ This repository provides a lightweight Ubuntu-based Docker image with Node.js an
 The Docker image is available at:
 
 ```
-docker pull benyamin/codex-sandbox:latest
+docker pull qiye45/codex-sandbox:latest
 ```
 
 You can also pull a specific version tagged with the @openai/codex npm version:
 
 ```
-docker pull benyamin/codex-sandbox:0.36.0
+docker pull qiye45/codex-sandbox:0.36.0
 ```
 
 This repository builds the image for both linux/amd64 and linux/arm64.
@@ -31,7 +31,7 @@ Run the container interactively with your current directory mounted:
 ```sh
 docker run --rm -it \
     -v $(pwd):/workspace/$(basename $(pwd)) -w /workspace/$(basename $(pwd)) \
-    benyamin/codex-sandbox:latest
+    qiye45/codex-sandbox:latest
 ```
 
 #### Common Usage Patterns
@@ -41,7 +41,7 @@ docker run --rm -it \
 docker run --rm \
     -v $(pwd):/workspace \
     -w /workspace \
-    benyamin/codex-sandbox:latest \
+    qiye45/codex-sandbox:latest \
     codex --version
 ```
 
@@ -51,7 +51,7 @@ docker run --rm -it \
     -v $(pwd):/workspace/project \
     -w /workspace/project \
     -e OPENAI_API_KEY=$OPENAI_API_KEY \
-    benyamin/codex-sandbox:latest
+    qiye45/codex-sandbox:latest
 ```
 
 **3. Non-interactive/CI mode:**
@@ -60,7 +60,7 @@ docker run --rm \
     -v $(pwd):/workspace \
     -w /workspace \
     -e OPENAI_API_KEY=$OPENAI_API_KEY \
-    benyamin/codex-sandbox:latest \
+    qiye45/codex-sandbox:latest \
     sh -c "codex login --api-key \$OPENAI_API_KEY && codex exec --full-auto 'update CHANGELOG for next release'"
 ```
 
@@ -71,7 +71,7 @@ docker run --rm \
     -v ~/.codex:/root/.codex \
     -w /workspace \
     -e OPENAI_API_KEY=$OPENAI_API_KEY \
-    benyamin/codex-sandbox:latest \
+    qiye45/codex-sandbox:latest \
     codex exec "continue the task" resume --last
 ```
 
@@ -85,7 +85,7 @@ docker run --rm \
       -v ${{ github.workspace }}:/workspace \
       -w /workspace \
       -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
-      benyamin/codex-sandbox:latest \
+      qiye45/codex-sandbox:latest \
       sh -c "codex login --api-key \$OPENAI_API_KEY && codex exec --full-auto 'update CHANGELOG for next release'"
 ```
 
@@ -97,7 +97,7 @@ codex_analysis:
         -v $PWD:/workspace 
         -w /workspace 
         -e OPENAI_API_KEY=$OPENAI_API_KEY 
-        benyamin/codex-sandbox:latest 
+        qiye45/codex-sandbox:latest 
         sh -c "codex login --api-key $OPENAI_API_KEY && codex exec --full-auto 'analyze code quality and generate report'"
 ```
 
@@ -106,7 +106,7 @@ codex_analysis:
 This image is designed to be used as a base for your own Docker images that need the Codex CLI:
 
 ```dockerfile
-FROM benyamin/codex-sandbox:latest
+FROM qiye45/codex-sandbox:latest
 
 # Add your application files
 COPY . /app
@@ -121,7 +121,7 @@ CMD ["your-application"]
 #### Example: CI/CD Integration
 
 ```dockerfile
-FROM benyamin/codex-sandbox:latest
+FROM qiye45/codex-sandbox:latest
 
 # Copy your project
 COPY . /workspace
@@ -134,7 +134,7 @@ RUN codex --api-key {}analyze src/ > analysis-report.txt
 #### Example: Development Environment
 
 ```dockerfile
-FROM benyamin/codex-sandbox:latest
+FROM qiye45/codex-sandbox:latest
 
 # Install additional development tools
 RUN apt-get update && apt-get install -y \
@@ -194,7 +194,7 @@ This image comes with the [@openai/codex CLI](https://www.npmjs.com/package/@ope
 
 1. Clone the repository:
 ```sh
-git clone https://github.com/benyaminsalimi/codex-sandbox.git
+git clone https://github.com/qiye45/codex-sandbox.git
 cd codex-sandbox
 ```
 

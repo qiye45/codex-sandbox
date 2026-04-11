@@ -47,7 +47,7 @@ jobs:
             
             ### Ready to Use
             ```bash
-            docker pull benyamin/codex-sandbox:${{ steps.build.outputs.latest_version }}
+            docker pull qiye45/codex-sandbox:${{ steps.build.outputs.latest_version }}
             ```
             
             ---
