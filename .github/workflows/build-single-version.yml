@@ -80,39 +80,36 @@ jobs:
           echo "🔍 Processing version: ${version}"
           echo "🔧 Dry run mode: ${dry_run}"
           echo ""
-          
-          echo "🔍 Checking if ${image_name} exists..."
-          if [ -z "$(DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect "$image_name" 2> /dev/null)" ]; then
-            if [ "$dry_run" = "true" ]; then
-              echo "📝 [DRY RUN] Would build ${image_name}"
-              echo "✅ Dry run completed for version ${version}"
-            else
-              if [ "$should_push" = "true" ]; then
-                echo "🚀 Building and pushing ${image_name}..."
+
+          if [ "$dry_run" = "true" ]; then
+            echo "📝 [DRY RUN] Would build ${image_name}"
+            if [ "$version" != "latest" ]; then
+              echo "📝 [DRY RUN] Would also push ${latest_image}"
+            fi
+            echo "✅ Dry run completed for version ${version}"
+          else
+            if [ "$should_push" = "true" ]; then
+              echo "🚀 Building and pushing ${image_name}..."
+              docker buildx build \
+                --platform "$platforms" \
+                --build-arg "CODEX_VERSION=${version}" \
+                -t "$image_name" --push .
+              if [ "$version" = "latest" ]; then
+                echo "✅ Successfully built and pushed ${image_name}"
+              else
                 docker buildx build \
                   --platform "$platforms" \
                   --build-arg "CODEX_VERSION=${version}" \
-                  -t "$image_name" --push .
-                if [ "$version" = "latest" ]; then
-                  echo "✅ Successfully built and pushed ${image_name}"
-                else
-                  docker buildx build \
-                    --platform "$platforms" \
-                    --build-arg "CODEX_VERSION=${version}" \
-                    -t "$latest_image" --push .
-                  echo "✅ Successfully built and pushed ${image_name} and ${latest_image}"
-                fi
-              else
-                echo "🚀 Building ${image_name} locally (no push)..."
-                docker buildx build \
-                  --build-arg "CODEX_VERSION=${version}" \
-                  -t "$image_name" --load .
-                echo "✅ Successfully built ${image_name} (local only)"
+                  -t "$latest_image" --push .
+                echo "✅ Successfully built and pushed ${image_name} and ${latest_image}"
               fi
+            else
+              echo "🚀 Building ${image_name} locally (no push)..."
+              docker buildx build \
+                --build-arg "CODEX_VERSION=${version}" \
+                -t "$image_name" --load .
+              echo "✅ Successfully built ${image_name} (local only)"
             fi
-          else
-            echo "⏭️  ${image_name} already exists, skipping..."
-            echo "✅ Version ${version} already available"
           fi
           
           echo ""
