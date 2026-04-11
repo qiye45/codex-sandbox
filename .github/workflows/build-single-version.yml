@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Codex version to build (e.g., 0.38.0)'
-        required: true
+        description: 'Codex version to build (e.g., 0.38.0, default latest)'
+        required: false
+        default: latest
         type: string
       dry_run:
         description: 'Dry run - check what would be built without actually building'
