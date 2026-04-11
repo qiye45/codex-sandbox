@@ -27,9 +27,26 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
   && apt-get install -y nodejs \
   && rm -rf /var/lib/apt/lists/*
 
+# Install Go (multi-arch)
+ARG GO_VERSION=1.25.7
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+    amd64) GO_ARCH='amd64' ;; \
+    arm64) GO_ARCH='arm64' ;; \
+    *) echo "Unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
+  esac \
+  && curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -o /tmp/go.tar.gz \
+  && rm -rf /usr/local/go \
+  && tar -C /usr/local -xzf /tmp/go.tar.gz \
+  && rm -f /tmp/go.tar.gz
+
 # Set up npm global directory with proper permissions
 RUN mkdir -p /usr/local/share/npm-global \
   && chmod 755 /usr/local/share/npm-global
+
+# Set up Go workspace directory
+RUN mkdir -p /go/bin /go/pkg /go/src \
+  && chmod -R 755 /go
 
 # Install codex from npm globally
 ARG CODEX_VERSION=latest
@@ -38,7 +55,8 @@ RUN npm install -g @openai/codex@${CODEX_VERSION} \
 
 # Set npm global config for any user
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
+ENV GOPATH=/go
+ENV PATH=$PATH:/usr/local/share/npm-global/bin:/usr/local/go/bin:/go/bin
 
 # Inside the container we consider the environment already sufficiently locked
 # down, therefore instruct Codex CLI to allow running without sandboxing.
