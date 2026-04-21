@@ -56,9 +56,9 @@ RUN mkdir -p /usr/local/share/npm-global \
 RUN mkdir -p /go/bin /go/pkg /go/src \
   && chmod -R 755 /go
 
-# Install codex from npm globally
+# Install codex and claude-code from npm globally
 ARG CODEX_VERSION=latest
-RUN npm install -g @openai/codex@${CODEX_VERSION} \
+RUN npm install -g @openai/codex@${CODEX_VERSION} @anthropic-ai/claude-code \
     && npm cache clean --force
 
 # Set npm global config for any user
